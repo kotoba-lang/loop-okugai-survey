@@ -116,7 +116,8 @@
                       "accepted:" (count (:accepted decision))
                       "below-threshold:" (count (:below-threshold decision))
                       "unknown-owner:" (:poles-unknown-owner measurements)
-                      "routable:" (:poles-routable measurements)))))
+                      "routable:" (:poles-routable measurements)
+                      "candidate-routable:" (:poles-candidate-routable measurements)))))
         (.catch (fn [e]
                   (println "survey failed:" (str e))
                   (js/process.exit 1))))))

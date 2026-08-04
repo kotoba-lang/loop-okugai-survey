@@ -58,6 +58,23 @@
     (testing "代理店カタログは area shard に混ぜない"
       (is (empty? (filter :agency/id shard))))))
 
+(deftest jurisdiction-is-stamped-from-the-declared-area-not-guessed
+  (let [{:keys [poles measurements]} (survey/evaluate observations {:areas areas})]
+    (is (every? #(= "JP-13" (:pole/jurisdiction %)) poles))
+    (is (every? #(= "test-area" (:pole/survey-area %)) poles))
+    (testing "管轄が付くと所有者未確定でも問い合わせ先候補が出る"
+      ;; 3 本のうち 1 本だけ operator タグを持つ = routable、残り 2 本が候補経路
+      (is (= 1 (:poles-routable measurements)))
+      (is (= 2 (:poles-candidate-routable measurements)))
+      (is (= 2 (:poles-unknown-owner measurements)))
+      (is (zero? (get (:poles-by-route-status measurements) :unknown-owner 0))))))
+
+(deftest poles-outside-every-declared-area-get-no-jurisdiction
+  (testing "bbox に入らない柱に管轄を付けない（逆ジオコードで推測しない）"
+    (let [far (obs :osm "node/99" 10.0 10.0)
+          {:keys [poles]} (survey/evaluate [far] {:areas areas})]
+      (is (nil? (:pole/jurisdiction (first poles)))))))
+
 (deftest run-is-deterministic
   (let [opts {:areas areas :observations observations :sources #{:osm :mapillary}
               :generated-at "2026-08-04T00:00:00Z"}]

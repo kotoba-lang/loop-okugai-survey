@@ -40,38 +40,45 @@ data/survey-evidence-<area>.edn           入力・測定・閾値・落とし�
 だけ増えて見えるため（datom 面に upsert キーは無い）。同じ `denchu-inventory`
 dataset なので join は従来どおりできる。
 
-## 初回 survey の実測（2026-08-04、OSM のみ）
+## survey 実測（2026-08-04、OSM のみ）
 
-| area | 管轄 | 観測 | 柱 | 所有者判明 | 窓口到達可 |
-|---|---|---:|---:|---:|---:|
-| chiyoda-marunouchi | JP-13 | 0 | 0 | 0 | 0 |
-| setagaya | JP-13 | 8 | 5 | 0 | 0 |
-| kyoto-nakagyo | JP-26 | 55 | 55 | 0 | 0 |
-| sapporo-chuo | JP-01 | 205 | 201 | 0 | 0 |
+| area | 管轄 | 観測 | 柱 | 所有者判明 | 窓口確定 | **照会可（区域候補）** |
+|---|---|---:|---:|---:|---:|---:|
+| chiyoda-marunouchi | JP-13 | 0 | 0 | 0 | 0 | 0 |
+| setagaya | JP-13 | 8 | 5 | 0 | 0 | **5** |
+| kyoto-nakagyo | JP-26 | 55 | 55 | 0 | 0 | **55** |
+| sapporo-chuo | JP-01 | 205 | 201 | 0 | 0 | **201** |
+| 計 | | 268 | 261 | 0 | 0 | **261** |
 
-**この表の右2列が 0 なのが、今この loop が明らかにした最大のギャップ。**
-OSM に柱はマッピングされていても `operator` タグはほぼ付いていないので、
-所有者が決まらず、したがって申込先の代理店も決まらない。`denchu` は所有者を
-推測しない設計なので、これは黙って埋まらず `:pole/owner "unknown"` /
-`:pole/routable false` として台帳に出る。
+**所有者判明が 0 なのは変わらない** — OSM に `operator` タグがほぼ付いていない
+ため。`denchu` は所有者を推測しないので、これは黙って埋まらず
+`:pole/owner "unknown"` として台帳に出る。
 
-丸の内が 0 件なのも同じく実測値であって障害ではない（無電柱化の進んだ区域 +
-中心部の柱マッピングが薄い）。**area の外に柱が無いのではなく、見ていない。**
+**しかし出稿導線は通る。** survey が宣言した管轄（`--jurisdiction`）を柱に刻む
+ようになり、`denchu.area` が供給区域から候補所有者を出すので、261 本すべてが
+`:pole/route-status "candidate-by-area"` になった。所有者はその照会（「この座標の
+柱は御社の設備か」）で確定するのが実務であり、`denchu.order` はこの候補ルートでの
+問い合わせを許す。**候補は柱ではなく経路に載る** — `:pole/owner` は unknown のまま。
+
+丸の内が 0 件なのも実測値であって障害ではない（無電柱化の進んだ区域 + 中心部の
+柱マッピングが薄い）。**area の外に柱が無いのではなく、見ていない。**
 
 ## 次に効く一手
 
-1. **所有者の解決**: 現地の柱番号札（電力会社の柱には番号札が付く）を
-   Mapillary の画像から読む経路。`com-mapillary-graph-api` の `/images` +
-   `detections` は既に叩ける。
-2. **Mapillary の併用**: `--sources both` で 2 source 一致が信頼度 +0.30。
-   `MAPILLARY_ACCESS_TOKEN` が要る。
-3. **代理店への実問い合わせ**: `denchu.order` の `:inquiry-proposed` →
-   `:inquiry-sent`（`:external-send` risk、承認キュー経由）。
+1. **所有者の確定**: (a) 候補代理店への実照会（`denchu.order` の
+   `:inquiry-proposed` → `:inquiry-sent`、`:external-send` risk）。(b) 現地の
+   柱番号札を Mapillary の画像から読む経路 — `com-mapillary-graph-api` の
+   `/images` + `detections` は実装済みだが **`MAPILLARY_ACCESS_TOKEN` が要る**
+   （未取得。account 登録はオーナー作業）。
+2. **Mapillary の併用**: `--sources both` で 2 source 一致が信頼度 +0.30。同上で token 待ち。
+3. **電力側の窓口拡大**: 所有者 12 社中 5 社しか代理店を収録していない
+   （未収録: 東北 / 中国 / 四国 / 九州 / 北海道 / 北陸 / 沖縄）。NTT 東西の窓口は
+   全国を覆うので照会自体は全管轄で成立するが、電力柱だった場合の申込先は要調査。
 
 ## テスト
 
 ```bash
-nbb --classpath "src:test:../denchu/src" test/run.cljs    # 5 tests / 18 assertions
+nbb --classpath "src:test:../denchu/src" test/run.cljs    # 7 tests / 25 assertions
 ```
 
 MIT。

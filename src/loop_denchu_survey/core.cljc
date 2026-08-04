@@ -26,14 +26,38 @@
 
 ;; ── evaluate ────────────────────────────────────────────────────────
 
+(defn- in-bbox?
+  [{:keys [south west north east]} {:keys [pole/lat pole/lon]}]
+  (and (<= south lat north) (<= west lon east)))
+
+(defn stamp-jurisdiction
+  "柱に管轄を刻む。**座標から逆引きしない** —— survey が宣言した area の
+  bbox に入っているかだけを見て、その area の `:area/jurisdiction` を写す。
+  どの area にも入らない柱には付けない（推測しない）。
+
+  管轄が付くと `denchu.media/contact-route` が区域から候補所有者を出せる
+  ようになり、所有者未確定でも問い合わせを組める（`denchu.area` の設計）。"
+  [poles areas]
+  (mapv (fn [p]
+          (if-let [a (some (fn [a] (when (and (:area/jurisdiction a)
+                                              (in-bbox? (:area/bbox a) p))
+                                     a))
+                           areas)]
+            (assoc p :pole/jurisdiction (:area/jurisdiction a)
+                     :pole/survey-area (:area/id a))
+            p))
+        poles))
+
 (defn evaluate
   "観測列 → 柱列 + 測定値。source ごとの寄与を残すのは、後から
   『Mapillary を足して何本増えたか』を答えられるようにするため。"
-  [observations {:keys [radius-m] :or {radius-m 8.0}}]
+  [observations {:keys [radius-m areas] :or {radius-m 8.0}}]
   (let [{:keys [poles rejected]} (pole/fuse observations {:radius-m radius-m})
+        poles (stamp-jurisdiction poles (or areas []))
         by-source (frequencies (map :obs/source observations))
         multi (count (filter #(> (count (:pole/sources %)) 1) poles))
-        unknown-owner (count (filter #(= :unknown (:pole/owner %)) poles))]
+        unknown-owner (count (filter #(= :unknown (:pole/owner %)) poles))
+        route-status (frequencies (map #(:route/status (media/contact-route %)) poles))]
     {:poles poles
      :rejected rejected
      :measurements
@@ -42,7 +66,11 @@
       :poles (count poles)
       :poles-multi-source multi
       :poles-unknown-owner unknown-owner
-      :poles-routable (count (filter #(media/routable? (:pole/owner %)) poles))
+      ;; 所有者が確定していて窓口も分かる柱
+      :poles-routable (get route-status :routable 0)
+      ;; 所有者は未確定だが、区域から候補が出るので問い合わせは組める柱
+      :poles-candidate-routable (get route-status :candidate-by-area 0)
+      :poles-by-route-status route-status
       :rejected-observations (count rejected)}}))
 
 ;; ── decide ──────────────────────────────────────────────────────────
@@ -100,7 +128,8 @@
   `{:areas [...] :observations [...] :sources #{:osm} :generated-at \"...\"}`"
   [{:keys [areas observations sources generated-at radius-m min-confidence]
     :or {radius-m 8.0 min-confidence default-min-confidence}}]
-  (let [{:keys [poles rejected measurements]} (evaluate observations {:radius-m radius-m})
+  (let [{:keys [poles rejected measurements]} (evaluate observations {:radius-m radius-m
+                                                                      :areas areas})
         decision (decide poles {:min-confidence min-confidence})]
     {:shard (shard {:accepted (:accepted decision) :areas areas :sources sources
                     :rejected (count rejected) :generated-at generated-at})

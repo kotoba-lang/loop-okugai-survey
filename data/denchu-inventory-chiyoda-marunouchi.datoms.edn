@@ -1,4 +1,4 @@
 ;; 生成物 — 手で編集しない。再生成: loop-denchu-survey bin/survey.cljs
-;; area=chiyoda-marunouchi jurisdiction=JP-13 sources=osm generated-at=2026-08-04T04:44:57.665Z
+;; area=chiyoda-marunouchi jurisdiction=JP-13 sources=osm generated-at=2026-08-04T06:06:18.357Z
 ;; ⚠ この shard は上記 area の中だけを見ている。面の外に柱が無いのではなく、見ていない。
-[#:denchu.coverage{:poles-with-unknown-owner 0, :owners-known 12, :sources ["osm"], :rejected-observations 0, :owners-unrouted ["energia-nw" "hepco-nw" "kyuden-t" "okiden" "rikuden-t" "tohoku-epco" "yonden-t"], :areas ["chiyoda-marunouchi"], :owners-routable 5, :generated-at "2026-08-04T04:44:57.665Z", :poles 0, :note "この shard は列挙した survey area の中だけを見ている。面に無い柱は『存在しない』ではなく『まだ調べていない』。掲出可否 (:pole/ad-eligible) は全件 unknown から始まる —— 所有者/代理店の回答だけがそれを動かせる。"}]
+[#:denchu.coverage{:poles-with-unknown-owner 0, :poles-routable 0, :owners-known 12, :sources ["osm"], :rejected-observations 0, :poles-candidate-routable 0, :owners-unrouted ["energia-nw" "hepco-nw" "kyuden-t" "okiden" "rikuden-t" "tohoku-epco" "yonden-t"], :areas ["chiyoda-marunouchi"], :owners-routable 5, :generated-at "2026-08-04T06:06:18.357Z", :poles 0, :note "この shard は列挙した survey area の中だけを見ている。面に無い柱は『存在しない』ではなく『まだ調べていない』。掲出可否 (:pole/ad-eligible) は全件 unknown から始まる —— 所有者/代理店の回答だけがそれを動かせる。"}]

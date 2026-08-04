@@ -102,3 +102,27 @@
               :media-requested [:billboard] :enrich enrich
               :generated-at "2026-08-04T00:00:00Z"}]
     (is (= (:shard (survey/run opts)) (:shard (survey/run opts))))))
+
+(deftest a-failed-source-must-not-produce-a-zero-count-shard
+  (testing "全 source が落ちたら shard を出さない — 0 件の台帳は『調べて無かった』と読まれる"
+    (let [r (survey/run {:areas areas :observations [] :sources #{:osm}
+                         :source-errors [{:source :osm :error "overpass request failed"}]
+                         :media-requested [:billboard]
+                         :generated-at "2026-08-04T00:00:00Z"})]
+      (is (nil? (:shard r)))
+      (is (true? (:all-sources-failed r)))
+      (is (true? (:survey/partial (:evidence r))))
+      (is (= 1 (count (:survey/source-errors (:evidence r)))))))
+  (testing "一部だけ落ちたら shard は出すが coverage に失敗を刻む"
+    (let [r (survey/run {:areas areas :observations observations
+                         :sources #{:osm :mapillary}
+                         :source-errors [{:source :mapillary :error "no token"}]
+                         :media-requested [:billboard]
+                         :enrich enrich
+                         :generated-at "2026-08-04T00:00:00Z"})
+          cov (first (filter :okugai.coverage/sites (:shard r)))]
+      (is (some? (:shard r)))
+      (is (false? (:all-sources-failed r)))
+      (is (= 1 (:okugai.coverage/source-errors cov)))
+      (is (= ["mapillary"] (:okugai.coverage/sources-failed cov)))
+      (is (true? (:okugai.coverage/partial cov))))))

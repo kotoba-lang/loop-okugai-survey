@@ -114,8 +114,9 @@
              (when (seq errors) (println "WARNING: source(s) failed —" (pr-str errors)))
              (let [generated-at (now-iso)
                    enrich (comp denchu-enrich/site route/stamp)
-                   {:keys [shard evidence measurements decision]}
+                   {:keys [shard evidence measurements decision all-sources-failed]}
                    (survey/run {:areas [a] :observations observations :sources srcs
+                                :source-errors errors
                                 :media-requested med
                                 :generated-at generated-at
                                 :enrich enrich
@@ -126,6 +127,14 @@
                                                   survey/default-min-confidence)})
                    evidence (assoc evidence :survey/per-source per-source
                                    :survey/source-errors errors)]
+               (when all-sources-failed
+                 (println "ERROR: 要求した source が全部失敗した。"
+                          "0 件の shard を書くと『調べて無かった』と読まれるので書かない。"
+                          "証跡だけ残す。")
+                 (write-edn! (path/join outdir (str "survey-evidence-" area-id ".edn"))
+                             evidence
+                             ";; survey は失敗した。inventory shard は書いていない。")
+                 (js/process.exit 1))
                (write-edn! (path/join outdir (str "okugai-inventory-" area-id ".datoms.edn"))
                            shard
                            (str ";; 生成物 — 手で編集しない。再生成: loop-okugai-survey bin/survey.cljs\n"

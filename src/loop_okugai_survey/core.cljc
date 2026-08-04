@@ -101,19 +101,28 @@
 
 ;; ── act / record-evidence ───────────────────────────────────────────
 
+(defn all-sources-failed?
+  "要求した source が全部落ちたか。**このとき shard を書いてはいけない** ——
+  0 件の台帳は『調べて無かった』と読まれるが、実際は『調べられなかった』。"
+  [sources source-errors]
+  (and (seq sources)
+       (= (set sources) (set (map :source source-errors)))))
+
 (defn shard
-  [{:keys [accepted areas sources rejected generated-at media-requested]}]
+  [{:keys [accepted areas sources rejected generated-at media-requested source-errors]}]
   (datoms/inventory-shard {:sites accepted
                            :areas (mapv :area/id areas)
                            :sources sources
                            :rejected rejected
                            :generated-at generated-at
-                           :media-requested media-requested}))
+                           :media-requested media-requested
+                           :source-errors source-errors}))
 
 (defn evidence
   "1 回の survey の証跡。入力・測定・閾値・落としたものを全部持つので、
   同じ入力から同じ shard が再現できるかを後から検査できる。"
-  [{:keys [areas sources measurements decision generated-at radius-m media-requested]}]
+  [{:keys [areas sources measurements decision generated-at radius-m media-requested
+           source-errors]}]
   {:survey/generated-at generated-at
    :survey/areas (mapv (fn [a] (select-keys a [:area/id :area/bbox :area/jurisdiction])) areas)
    :survey/sources (vec (sort (map name sources)))
@@ -125,6 +134,8 @@
    :survey/accepted (count (:accepted decision))
    :survey/below-threshold (count (:below-threshold decision))
    :survey/below-threshold-ids (mapv :site/id (:below-threshold decision))
+   :survey/source-errors (vec source-errors)
+   :survey/partial (boolean (seq source-errors))
    :survey/honesty
    (str "この survey は列挙した area の中で、要求した媒体だけを見ている。"
         "area の外・要求しなかった媒体に地点が無いのではなく、見ていない。"
@@ -136,17 +147,21 @@
 (defn run
   "観測が揃っている前提で 1 サイクル回す純関数。ネットワークは CLI 側。"
   [{:keys [areas observations sources generated-at radius-m min-confidence
-           media-requested enrich operator-resolver]
+           media-requested enrich operator-resolver source-errors]
     :or {radius-m 8.0 min-confidence default-min-confidence}}]
   (let [{:keys [sites rejected measurements]}
         (evaluate observations {:radius-m radius-m :areas areas
                                 :enrich enrich :operator-resolver operator-resolver})
         decision (decide sites {:min-confidence min-confidence})]
-    {:shard (shard {:accepted (:accepted decision) :areas areas :sources sources
-                    :rejected (count rejected) :generated-at generated-at
-                    :media-requested media-requested})
+    {;; 全 source が落ちたときは shard を出さない（nil）。呼び出し側は書かない。
+     :shard (when-not (all-sources-failed? sources source-errors)
+              (shard {:accepted (:accepted decision) :areas areas :sources sources
+                      :rejected (count rejected) :generated-at generated-at
+                      :media-requested media-requested :source-errors source-errors}))
+     :all-sources-failed (all-sources-failed? sources source-errors)
      :evidence (evidence {:areas areas :sources sources :measurements measurements
                           :decision decision :generated-at generated-at
-                          :radius-m radius-m :media-requested media-requested})
+                          :radius-m radius-m :media-requested media-requested
+                          :source-errors source-errors})
      :decision decision
      :measurements measurements}))

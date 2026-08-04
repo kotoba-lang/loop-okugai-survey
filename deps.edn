@@ -1,0 +1,7 @@
+;; loop-denchu-survey — continuous orchestrator.
+;; domain truth は denchu に、API の作法は origin 面の 2 repo に委譲する。
+{:paths ["src"]
+ :deps {kotoba-lang/denchu {:local/root "../denchu"}
+        kotoba-lang/org-openstreetmap-overpass {:local/root "../org-openstreetmap-overpass"}
+        kotoba-lang/com-mapillary-graph-api {:local/root "../com-mapillary-graph-api"}}
+ :aliases {:test {:extra-paths ["test"]}}}

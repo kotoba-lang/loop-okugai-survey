@@ -12,7 +12,7 @@
 (ns survey
   (:require ["fs" :as fs]
             ["path" :as path]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [com-mapillary-graph-api.fetch :as mly-fetch]
             [denchu.datoms :as denchu-datoms]
             [denchu.enrich :as denchu-enrich]

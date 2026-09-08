@@ -2,7 +2,12 @@
 ;; domain truth は okugai（一般）と媒体 repo（denchu 等）に、API の作法は
 ;; origin 面の 2 repo に委譲する。
 {:paths ["src"]
- :deps {io.github.kotoba-lang/okugai {:local/root "../okugai"}
+ :deps {
+        ;; kotoba.lang.text, not clojure.string. Pinned as an explicit floor:
+        ;; tools.deps takes the NEWEST sha it is shown, so without a floor here
+        ;; this repo silently rides whatever a sibling happens to name.
+        io.github.kotoba-lang/text {:git/sha "73bdb13ae7a3d004b44bca08be03a3191157a38f"}
+       io.github.kotoba-lang/okugai {:local/root "../okugai"}
         io.github.kotoba-lang/denchu {:local/root "../denchu"}
         io.github.kotoba-lang/org-openstreetmap-overpass {:local/root "../org-openstreetmap-overpass"}
         io.github.kotoba-lang/com-mapillary-graph-api {:local/root "../com-mapillary-graph-api"}}

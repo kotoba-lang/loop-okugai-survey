@@ -2,7 +2,7 @@
 ;; loop-okugai-survey — 1 サイクル分の survey を実行して shard と evidence を書く。
 ;;
 ;;   nbb --classpath "src:../okugai/src:../denchu/src:../org-openstreetmap-overpass/src:../com-mapillary-graph-api/src" \
-;;       bin/survey.cljs --area-id chiyoda --jurisdiction JP-13 \
+;;       bin/survey.cljk --area-id chiyoda --jurisdiction JP-13 \
 ;;       --bbox 35.6790,139.7620,35.6830,139.7680 --media all --sources osm --out data
 ;;
 ;; --media all              観測タグを持つ全媒体（既定）
@@ -137,7 +137,7 @@
                  (js/process.exit 1))
                (write-edn! (path/join outdir (str "okugai-inventory-" area-id ".datoms.edn"))
                            shard
-                           (str ";; 生成物 — 手で編集しない。再生成: loop-okugai-survey bin/survey.cljs\n"
+                           (str ";; 生成物 — 手で編集しない。再生成: loop-okugai-survey bin/survey.cljk\n"
                                 ";; area=" area-id " jurisdiction=" jurisdiction
                                 " media=" (str/join "," (map name med))
                                 " sources=" (str/join "," (map name (sort srcs)))

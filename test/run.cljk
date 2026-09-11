@@ -1,5 +1,5 @@
-#!/usr/bin/env nbb
-;; nbb --classpath "src:test:../okugai/src:../denchu/src" test/run.cljk
+#!/usr/bin/env kbb
+;; kbb --backend sci --classpath "src:test:../okugai/src:../denchu/src" test/run.cljk
 (require '[clojure.test :as t] 'loop-okugai-survey.core-test)
 
 ;; Why the exit code comes from a report method and not from the return value

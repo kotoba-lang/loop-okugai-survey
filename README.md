@@ -19,7 +19,7 @@ record-evidence。写真・地図データから電柱を特定し、`denchu` �
 ## 走らせる
 
 ```bash
-nbb --classpath "src:../denchu/src:../org-openstreetmap-overpass/src:../com-mapillary-graph-api/src" \
+kbb --backend sci --classpath "src:../denchu/src:../org-openstreetmap-overpass/src:../com-mapillary-graph-api/src" \
     bin/survey.cljk --area-id setagaya --jurisdiction JP-13 \
     --bbox 35.6200,139.6200,35.6600,139.6800 --sources osm --out data
 ```
@@ -78,7 +78,7 @@ dataset なので join は従来どおりできる。
 ## テスト
 
 ```bash
-nbb --classpath "src:test:../denchu/src" test/run.cljk    # 7 tests / 25 assertions
+kbb --backend sci --classpath "src:test:../denchu/src" test/run.cljk    # 7 tests / 25 assertions
 ```
 
 MIT。

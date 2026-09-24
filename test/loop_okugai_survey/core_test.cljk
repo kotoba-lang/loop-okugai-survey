@@ -1,5 +1,5 @@
 (ns loop-okugai-survey.core-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [denchu.enrich :as denchu-enrich]
             [loop-okugai-survey.core :as survey]
             [okugai.medium :as medium]
